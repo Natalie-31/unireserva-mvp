@@ -1,0 +1,198 @@
+/* styles.css — UniReserva */
+/* Variables CSS centralizadas */
+:root {
+  --color-primary:   #1a73e8;
+  --color-secondary: #1557b0;
+  --color-success:   #1e8e3e;
+  --color-error:     #d93025;
+  --color-warning:   #f29900;
+  --color-bg:        #f8f9fa;
+  --color-card:      #ffffff;
+  --color-border:    #dadce0;
+  --color-text:      #202124;
+  --color-muted:     #5f6368;
+  --color-salon:     #e8f0fe;
+  --color-lab:       #fce8e6;
+  --color-equipo:    #e6f4ea;
+  --radius:          8px;
+  --shadow:          0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* Reset básico */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ──────────────────────────────────────────── */
+header {
+  background: var(--color-primary);
+  color: white;
+  padding: 1.5rem 2rem;
+  text-align: center;
+}
+header h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+header p  { font-size: 0.95rem; opacity: 0.85; }
+
+/* ── Main ────────────────────────────────────────────── */
+main {
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Secciones ───────────────────────────────────────── */
+section {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+section h2 {
+  font-size: 1.1rem;
+  color: var(--color-secondary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* ── Filtros de fecha/hora ───────────────────────────── */
+.filtros {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 140px;
+}
+.campo label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+.campo input,
+.campo select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  color: var(--color-text);
+  transition: border-color 0.2s;
+  background: white;
+}
+.campo input:focus,
+.campo select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+}
+
+/* ── Lista de recursos ───────────────────────────────── */
+#lista-recursos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+.tarjeta-recurso {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: border-color 0.2s, transform 0.1s;
+}
+.tarjeta-recurso:hover    { transform: translateY(-2px); }
+.tarjeta-recurso.seleccionado { border-color: var(--color-primary); }
+
+.tarjeta-salon      { background: var(--color-salon); }
+.tarjeta-laboratorio{ background: var(--color-lab); }
+.tarjeta-equipo     { background: var(--color-equipo); }
+
+.recurso-nombre {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+.recurso-tipo {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.sin-recursos {
+  color: var(--color-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  grid-column: 1 / -1;
+}
+
+/* ── Botón ───────────────────────────────────────────── */
+.btn-reservar {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-reservar:hover { background: var(--color-secondary); }
+
+/* ── Mensajes ────────────────────────────────────────── */
+#mensaje {
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.msg-exito {
+  background: #e6f4ea;
+  color: var(--color-success);
+  border: 1px solid #a8d5b5;
+}
+.msg-error {
+  background: #fce8e6;
+  color: var(--color-error);
+  border: 1px solid #f5c6c2;
+}
+
+/* ── Footer ──────────────────────────────────────────── */
+footer {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Responsivo ──────────────────────────────────────── */
+@media (max-width: 600px) {
+  header h1   { font-size: 1.5rem; }
+  .filtros    { flex-direction: column; }
+  #lista-recursos { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 380px) {
+  #lista-recursos { grid-template-columns: 1fr; }
+}

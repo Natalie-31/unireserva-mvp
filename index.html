@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UniReserva — Reserva de Recursos Universitarios</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header>
+    <h1>UniReserva</h1>
+    <p>Sistema de Reserva de Recursos — Universidad Mariano Gálvez</p>
+  </header>
+
+  <main>
+
+    <!-- Mensaje de éxito o error -->
+    <div id="mensaje" style="display:none;" role="alert"></div>
+
+    <section class="seccion-filtro">
+      <h2>Consultar disponibilidad</h2>
+      <div class="filtros">
+        <div class="campo">
+          <label for="fecha">Fecha</label>
+          <input type="date" id="fecha" name="fecha" required />
+        </div>
+        <div class="campo">
+          <label for="hora-inicio">Hora de inicio</label>
+          <input type="time" id="hora-inicio" name="hora-inicio" required />
+        </div>
+        <div class="campo">
+          <label for="hora-fin">Hora de fin</label>
+          <input type="time" id="hora-fin" name="hora-fin" required />
+        </div>
+      </div>
+    </section>
+
+    <section class="seccion-recursos">
+      <h2>Recursos disponibles</h2>
+      <div id="lista-recursos">
+        <p class="sin-recursos">
+          Selecciona fecha y horario para ver los recursos disponibles.
+        </p>
+      </div>
+    </section>
+
+    <section class="seccion-formulario">
+      <h2>Datos de la reserva</h2>
+      <form id="form-reserva" novalidate>
+
+        <!-- Campos ocultos — se llenan al seleccionar un recurso -->
+        <input type="hidden" id="recurso-id"     name="recurso-id" />
+        <input type="hidden" id="recurso-nombre" name="recurso-nombre" />
+
+        <div class="campo">
+          <label for="nombre">Nombre completo</label>
+          <input
+            type="text"
+            id="nombre"
+            name="nombre"
+            placeholder="Ingresa tu nombre completo"
+            required
+          />
+        </div>
+
+        <div class="campo">
+          <label for="rol">Rol</label>
+          <select id="rol" name="rol" required>
+            <option value="">Selecciona tu rol</option>
+            <option value="estudiante">Estudiante</option>
+            <option value="docente">Docente</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-reservar">Confirmar Reserva</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>UniReserva MVP — Ingeniería de Software 2026 — UMG Antigua Guatemala</p>
+  </footer>
+
+  <!-- Módulos JS en orden de dependencia -->
+<script src="modules/recursos.js"></script>
+<script src="modules/storageManager.js"></script>
+<script src="modules/validationManager.js"></script>
+<script src="modules/filterManager.js"></script>
+<script src="modules/uiManager.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
