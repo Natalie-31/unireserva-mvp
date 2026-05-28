@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Prueba Integracion IT-01 - UniReserva</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .ok { color: green; }
+    .fail { color: red; }
+    .linea { margin: 6px 0; }
+    .resumen { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h1>Prueba de Integracion IT-01</h1>
+
+
+<div id="resultados"></div>
+<div id="resumen"></div>
+
+<script src="modules/recursos.js"></script>
+<script src="modules/storageManager.js"></script>
+<script src="modules/validationManager.js"></script>
+<script src="modules/filterManager.js"></script>
+
+<script>
+  
+
+  var pasados = 0, fallidos = 0, total = 0;
+
+  function assertEqual(real, esperado, desc) {
+    var ok = JSON.stringify(real) === JSON.stringify(esperado);
+    var msg = (ok ? "[OK] " : "[FALLO] ") + desc;
+    if (!ok) msg += " | Esperado: " + JSON.stringify(esperado) + " | Obtenido: " + JSON.stringify(real);
+    console.log(msg);
+    return ok;
+  }
+
+  function ejecutarPaso(desc, fn) {
+    total++;
+    var ok = false;
+    try { ok = fn(); } catch(e) { console.error("Error en paso: " + desc, e); }
+    ok ? pasados++ : fallidos++;
+    var div = document.createElement("div");
+    div.className = "linea " + (ok ? "ok" : "fail");
+    div.textContent = (ok ? "[OK] " : "[FALLO] ") + desc;
+    document.getElementById("resultados").appendChild(div);
+  }
+
+  // Bloque principal
+  try {
+    localStorage.removeItem("reservas");
+
+    var FECHA = "2026-06-15", HORA_INI = "09:00", HORA_FIN = "11:00";
+    var REC_ID = "SAL-001", REC_NOMBRE = "Salon 301";
+
+    var reserva1 = {
+      id: "integ-001", recursoId: REC_ID, recursoNombre: REC_NOMBRE,
+      fecha: FECHA, horaInicio: HORA_INI, horaFin: HORA_FIN,
+      nombreUsuario: "Gabriela Lopez", rolUsuario: "estudiante",
+      fechaCreacion: new Date().toISOString()
+    };
+
+    // Casos de Pruebas Positivos
+    document.getElementById("resultados").innerHTML += "<p><strong>Casos Positivos</strong></p>";
+
+    ejecutarPaso("1. Sistema inicia sin reservas", function() {
+      return assertEqual(leerReservas().length, 0, "Storage vacio");
+    });
+
+    ejecutarPaso("2. Todos los recursos disponibles al inicio", function() {
+      var d = filtrarDisponibles(FECHA, HORA_INI, HORA_FIN);
+      return assertEqual(d.length, RECURSOS.length, "filtrarDisponibles retorna " + RECURSOS.length);
+    });
+
+    ejecutarPaso("3. Primera reserva sin conflicto", function() {
+      return assertEqual(validarConflicto(reserva1, leerReservas()), null, "validarConflicto null");
+    });
+
+    ejecutarPaso("4. Guardar reserva y verificar persistencia", function() {
+      var g = guardarReserva(reserva1);
+      var t = leerReservas().length;
+      return assertEqual(g, true, "guardarReserva true") && assertEqual(t, 1, "1 reserva en storage");
+    });
+
+    ejecutarPaso("5. Recurso reservado ya no disponible", function() {
+      var d = filtrarDisponibles(FECHA, HORA_INI, HORA_FIN);
+      var presente = d.some(function(r){ return r.id === REC_ID; });
+      return assertEqual(presente, false, "SAL-001 excluido") &&
+             assertEqual(d.length, RECURSOS.length - 1, "Total: " + (RECURSOS.length - 1));
+    });
+
+    ejecutarPaso("6. Reserva contigua permitida y guardada", function() {
+      var cont = {
+        id: "integ-003", recursoId: REC_ID, recursoNombre: REC_NOMBRE,
+        fecha: FECHA, horaInicio: "11:00", horaFin: "13:00",
+        nombreUsuario: "Luis Torres", rolUsuario: "docente",
+        fechaCreacion: new Date().toISOString()
+      };
+      var conflicto = validarConflicto(cont, leerReservas());
+      var guardado = (conflicto === null) ? guardarReserva(cont) : false;
+      var total = leerReservas().length;
+      return assertEqual(conflicto, null, "Sin conflicto") &&
+             assertEqual(guardado, true, "Guardada") &&
+             assertEqual(total, 2, "Total 2 reservas");
+    });
+
+    // Casos de prueba negativos
+    document.getElementById("resultados").innerHTML += "<p><strong>Casos Negativos</strong></p>";
+
+    // Limpiar y dejar una reserva base
+    localStorage.removeItem("reservas");
+    guardarReserva(reserva1);
+
+    ejecutarPaso("7. Solapamiento parcial rechazado", function() {
+      var solap = {
+        id: "integ-002", recursoId: REC_ID, recursoNombre: REC_NOMBRE,
+        fecha: FECHA, horaInicio: "10:00", horaFin: "12:00",
+        nombreUsuario: "Ana Garcia", rolUsuario: "docente",
+        fechaCreacion: new Date().toISOString()
+      };
+      var conflicto = validarConflicto(solap, leerReservas());
+      return assertEqual(conflicto !== null, true, "Conflicto detectado");
+    });
+
+    ejecutarPaso("8. Horario invalido (horaFin < horaInicio)", function() {
+      var res = validarHorario("11:00", "10:00");
+      return assertEqual(res.valido, false, "validarHorario retorna valido=false");
+    });
+
+    ejecutarPaso("9. Recurso inexistente no esta en catalogo", function() {
+      var existe = RECURSOS.some(function(r){ return r.id === "SAL-999"; });
+      return assertEqual(existe, false, "SAL-999 no existe");
+    });
+
+    ejecutarPaso("10. Campos obligatorios faltantes", function() {
+      var incompleta = {
+        id: "integ-006", recursoId: "", recursoNombre: REC_NOMBRE,
+        fecha: FECHA, horaInicio: HORA_INI, horaFin: HORA_FIN,
+        nombreUsuario: "", rolUsuario: ""
+      };
+      var vacios = [incompleta.recursoId, incompleta.nombreUsuario, incompleta.rolUsuario]
+                     .some(function(c){ return !c || c.trim() === ""; });
+      return assertEqual(vacios, true, "Campos vacios detectados");
+    });
+
+  } finally {
+    localStorage.removeItem("reservas");
+    var color = fallidos === 0 ? "green" : "red";
+    var texto = fallidos === 0 ? "Todos los pasos pasaron." : "Algunos pasos fallaron.";
+    document.getElementById("resumen").innerHTML =
+      "<div class='resumen' style='color:" + color + "'>" +
+      "Resultado: " + total + " pasos, " + pasados + " OK, " + fallidos + " FALLO. " + texto +
+      "</div>";
+  }
+</script>
+
+</body>
+</html>
