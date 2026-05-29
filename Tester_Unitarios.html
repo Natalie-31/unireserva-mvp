@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Unitarios - UniReserva</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .test { background: white; margin: 20px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .test.pass { border-left: 4px solid #4CAF50; }
+        .test.fail { border-left: 4px solid #f44336; }
+        .titulo { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .caso { margin: 10px 0; padding: 8px; background: #f9f9f9; border-radius: 4px; }
+        .caso.pass { color: #2e7d32; }
+        .caso.fail { color: #c62828; }
+        button { background: #1976D2; color: white; border: none; padding: 10px 20px; margin: 10px; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #1565C0; }
+    </style>
+</head>
+<body>
+    <h1>Test Unitarios - UniReserva</h1>
+    <button onclick="ejecutarTests()">Ejecutar Todos los Tests</button>
+    <button onclick="limpiarResultados()">Limpiar</button>
+    <div id="resultados"></div>
+
+    <script>
+        // Simulacion de los modulos del sistema
+        const ValidationManager = {
+            validarNombre(nombre) {
+                if (!nombre || nombre.trim() === '') {
+                    return { valido: false, error: 'El nombre no puede estar vacio' };
+                }
+                if (nombre.length < 3) {
+                    return { valido: false, error: 'El nombre debe tener al menos 3 caracteres' };
+                }
+                if (nombre.length > 100) {
+                    return { valido: false, error: 'El nombre no puede exceder 100 caracteres' };
+                }
+                return { valido: true, error: null };
+            },
+
+            validarHorario(horaInicio, horaFin) {
+                if (!horaInicio || !horaFin) {
+                    return { valido: false, error: 'Debe seleccionar hora de inicio y fin' };
+                }
+                if (horaInicio >= horaFin) {
+                    return { valido: false, error: 'La hora de inicio debe ser menor a la hora de fin' };
+                }
+                return { valido: true, error: null };
+            }
+        };
+
+        const StorageManager = {
+            reservas: [],
+            
+            guardarReserva(reserva) {
+                this.reservas.push(reserva);
+                return true;
+            },
+            
+            verificarDisponibilidad(recursoId, fecha, horaInicio, horaFin) {
+                return !this.reservas.some(r => 
+                    r.recursoId === recursoId && 
+                    r.fecha === fecha &&
+                    ((horaInicio >= r.horaInicio && horaInicio < r.horaFin) ||
+                     (horaFin > r.horaInicio && horaFin <= r.horaFin) ||
+                     (horaInicio <= r.horaInicio && horaFin >= r.horaFin))
+                );
+            },
+            
+            limpiar() {
+                this.reservas = [];
+            }
+        };
+
+        // Test Unitario 1: Validacion de nombre
+        function testUnitario1() {
+            const resultados = [];
+            
+            let res = ValidationManager.validarNombre('');
+            resultados.push({
+                nombre: 'Caso 1: Nombre vacio',
+                pasado: res.valido === false && res.error.includes('vacio'),
+                obtenido: res
+            });
+            
+            res = ValidationManager.validarNombre('Jo');
+            resultados.push({
+                nombre: 'Caso 2: Nombre muy corto ("Jo")',
+                pasado: res.valido === false && res.error.includes('3 caracteres'),
+                obtenido: res
+            });
+            
+            const nombreLargo = 'a'.repeat(101);
+            res = ValidationManager.validarNombre(nombreLargo);
+            resultados.push({
+                nombre: 'Caso 3: Nombre muy largo (101 caracteres)',
+                pasado: res.valido === false && res.error.includes('100 caracteres'),
+                obtenido: res
+            });
+            
+            res = ValidationManager.validarNombre('Juan Perez Gomez');
+            resultados.push({
+                nombre: 'Caso 4: Nombre valido ("Juan Perez Gomez")',
+                pasado: res.valido === true && res.error === null,
+                obtenido: res
+            });
+            
+            return { 
+                id: 'TU-001', 
+                nombre: 'Test Unitario 1 - Validacion de Nombre',
+                funcionalidad: 'Validacion del campo nombre completo',
+                descripcion: 'Verificar que el sistema valida correctamente el nombre del usuario, rechazando nombres vacios, muy cortos o muy largos',
+                resultadoEsperado: 'El sistema debe aceptar nombres entre 3 y 100 caracteres no vacios',
+                pasos: '1. Probar nombre vacio | 2. Probar nombre con menos de 3 caracteres | 3. Probar nombre con mas de 100 caracteres | 4. Probar nombre valido',
+                resultados: resultados
+            };
+        }
+
+        // Test Unitario 2: Validacion de horarios
+        function testUnitario2() {
+            const resultados = [];
+            
+            let res = ValidationManager.validarHorario('', '');
+            resultados.push({
+                nombre: 'Caso 1: Horas vacias',
+                pasado: res.valido === false && res.error.includes('Debe seleccionar'),
+                obtenido: res
+            });
+            
+            res = ValidationManager.validarHorario('15:00', '14:00');
+            resultados.push({
+                nombre: 'Caso 2: Inicio (15:00) mayor que Fin (14:00)',
+                pasado: res.valido === false && res.error.includes('inicio debe ser menor'),
+                obtenido: res
+            });
+            
+            res = ValidationManager.validarHorario('10:00', '10:00');
+            resultados.push({
+                nombre: 'Caso 3: Inicio (10:00) igual a Fin (10:00)',
+                pasado: res.valido === false && res.error.includes('menor'),
+                obtenido: res
+            });
+            
+            res = ValidationManager.validarHorario('09:00', '11:00');
+            resultados.push({
+                nombre: 'Caso 4: Horario valido (09:00 - 11:00)',
+                pasado: res.valido === true && res.error === null,
+                obtenido: res
+            });
+            
+            return { 
+                id: 'TU-002',
+                nombre: 'Test Unitario 2 - Validacion de Horarios',
+                funcionalidad: 'Validacion de rango horario (hora inicio y hora fin)',
+                descripcion: 'Verificar que el sistema valida correctamente que la hora de inicio sea menor que la hora de fin',
+                resultadoEsperado: 'El sistema debe rechazar horarios donde inicio >= fin o donde falte alguno de los dos campos',
+                pasos: '1. Probar horas vacias | 2. Probar hora inicio mayor que hora fin | 3. Probar hora inicio igual a hora fin | 4. Probar horario valido',
+                resultados: resultados
+            };
+        }
+
+        // Test Unitario 3: Verificacion de disponibilidad
+        function testUnitario3() {
+            StorageManager.limpiar();
+            const resultados = [];
+            
+            StorageManager.guardarReserva({
+                id: 'res-001',
+                recursoId: 1,
+                fecha: '2026-06-01',
+                horaInicio: '10:00',
+                horaFin: '12:00',
+                nombre: 'Juan Perez',
+                rol: 'docente'
+            });
+            
+            let disponible = StorageManager.verificarDisponibilidad(1, '2026-06-01', '10:00', '12:00');
+            resultados.push({
+                nombre: 'Caso 1: Mismo horario (10:00-12:00)',
+                pasado: disponible === false,
+                obtenido: disponible ? 'DISPONIBLE' : 'NO DISPONIBLE'
+            });
+            
+            disponible = StorageManager.verificarDisponibilidad(1, '2026-06-01', '11:00', '13:00');
+            resultados.push({
+                nombre: 'Caso 2: Horario solapado (11:00-13:00)',
+                pasado: disponible === false,
+                obtenido: disponible ? 'DISPONIBLE' : 'NO DISPONIBLE'
+            });
+            
+            disponible = StorageManager.verificarDisponibilidad(1, '2026-06-01', '08:00', '10:00');
+            resultados.push({
+                nombre: 'Caso 3: Sin solapar (08:00-10:00)',
+                pasado: disponible === true,
+                obtenido: disponible ? 'DISPONIBLE' : 'NO DISPONIBLE'
+            });
+            
+            disponible = StorageManager.verificarDisponibilidad(2, '2026-06-01', '10:00', '12:00');
+            resultados.push({
+                nombre: 'Caso 4: Diferente recurso (ID 2)',
+                pasado: disponible === true,
+                obtenido: disponible ? 'DISPONIBLE' : 'NO DISPONIBLE'
+            });
+            
+            disponible = StorageManager.verificarDisponibilidad(1, '2026-06-02', '10:00', '12:00');
+            resultados.push({
+                nombre: 'Caso 5: Diferente fecha (2026-06-02)',
+                pasado: disponible === true,
+                obtenido: disponible ? 'DISPONIBLE' : 'NO DISPONIBLE'
+            });
+            
+            return { 
+                id: 'TU-003',
+                nombre: 'Test Unitario 3 - Verificacion de Disponibilidad',
+                funcionalidad: 'Verificar disponibilidad de recursos sin solapamiento de horarios',
+                descripcion: 'Verificar que el sistema detecta correctamente cuando un recurso ya esta reservado en un horario especifico',
+                resultadoEsperado: 'El sistema debe permitir reservas solo si no hay conflicto de horario con reservas existentes',
+                pasos: '1. Crear reserva para recurso ID 1, fecha 2026-06-01, 10:00-12:00 | 2. Verificar disponibilidad mismo horario | 3. Verificar horario solapado | 4. Verificar horario sin solapamiento | 5. Verificar diferente recurso | 6. Verificar diferente fecha',
+                resultados: resultados
+            };
+        }
+
+        function ejecutarTests() {
+            const resultadosDiv = document.getElementById('resultados');
+            resultadosDiv.innerHTML = '';
+            
+            const tests = [testUnitario1(), testUnitario2(), testUnitario3()];
+            
+            tests.forEach(test => {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test';
+                
+                let todosPasaron = true;
+                let casosHtml = '';
+                
+                test.resultados.forEach(caso => {
+                    if (!caso.pasado) todosPasaron = false;
+                    
+                    casosHtml += `
+                        <div class="caso ${caso.pasado ? 'pass' : 'fail'}">
+                            <strong>${caso.nombre}</strong><br>
+                            Resultado: ${JSON.stringify(caso.obtenido)}<br>
+                            Estado: ${caso.pasado ? 'PASO' : 'FALLO'}
+                        </div>
+                    `;
+                });
+                
+                testDiv.className = `test ${todosPasaron ? 'pass' : 'fail'}`;
+                testDiv.innerHTML = `
+                    <div class="titulo">${test.id} - ${test.nombre}</div>
+                    <div><strong>Funcionalidad a evaluar:</strong> ${test.funcionalidad}</div>
+                    <div><strong>Descripcion:</strong> ${test.descripcion}</div>
+                    <div><strong>Resultado Esperado:</strong> ${test.resultadoEsperado}</div>
+                    <div><strong>Pasos para Reproducir:</strong> ${test.pasos}</div>
+                    <div style="margin-top: 10px;"><strong>Resultados Obtenidos:</strong></div>
+                    ${casosHtml}
+                    <div style="margin-top: 10px; font-weight: bold;">Resultado final: ${todosPasaron ? 'TODOS LOS CASOS PASARON' : 'ALGUNOS CASOS FALLARON'}</div>
+                `;
+                
+                resultadosDiv.appendChild(testDiv);
+            });
+        }
+        
+        function limpiarResultados() {
+            document.getElementById('resultados').innerHTML = '';
+        }
+        
+        window.onload = ejecutarTests;
+    </script>
+</body>
+</html>
